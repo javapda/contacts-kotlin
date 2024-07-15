@@ -1,5 +1,8 @@
 package com.javapda.contacts
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+
 /**
  * Is valid phone number
  * https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
@@ -49,6 +52,19 @@ fun reqVPN(pattern: String, candidate: String) {
 }
 
 /**
+ * Format local date time
+ * From the problem: 2018-01-01T00:01
+ * https://kotlinlang.org/api/kotlinx-datetime/kotlinx-datetime/kotlinx.datetime/-local-date-time/
+ * @param localDateTime
+ * @return
+ */
+fun formatLocalDateTime(localDateTime: LocalDateTime): String {
+    // 2018-01-01T00:01
+
+    return localDateTime.toString().substring(0,16)
+}
+
+/**
  * reqIVPN
  * invalid reqex check
  *
@@ -59,6 +75,17 @@ fun reqIVPN(pattern: String, candidate: String) {
     require(!pattern.toRegex().matches(candidate)) { "pattern '$pattern', should match '$candidate'" }
 }
 
+fun isValidGender(gender: String): Boolean = gender in listOf("M", "F")
+
+fun isValidLocalDateText(localDateText: String): Boolean {
+    try {
+        LocalDate.parse(localDateText)
+        return true
+    } catch (e: Exception) {
+        return false
+    }
+}
+
 fun isValidPhoneNumber(phoneNumber: String): Boolean {
 //    return phoneNumber.matches(Regex("^(?:\\+.\\s\\d{2})|(?:\\+\\(\\S{5,7}\\))|^(?:\\d{1,3}\$)|^(?:\\(\\d{1,3}\\)\$)|^(?:\\d{3}.[a-zA-Z]{3})|^(?:\\d{3}.[0-9]{3}.[a-zA-Z]{3})|^(?:\\d{3}.[0-9]{3}.[0-9]{3}\$)|^(?:\\d{3}.\\(\\d{3}\\))\$|^(?:\\d{3}.\\d{2}.[a-z]{2,4}.[0-9]{2})|^(?:\\d{3}.\\(\\d{3}\\).[0-9]{3}\$)|^(?:\\d{3}.\\(\\d{2}\\).\\d{2}.\\d{2})|^(?:\\(\\d{3}\\).\\d{3}\$)|^(?:\\(\\d{3}\\).\\d{3}.\\d{3})"))
 //    val regexText="""^[+]?([a-zA-Z0-9\- ]+)*(\([a-zA-Z0-9\- ]+\))([a-zA-Z0-9\- ]+)$"""
@@ -66,58 +93,58 @@ fun isValidPhoneNumber(phoneNumber: String): Boolean {
     val optionalPlusPrefix = "[+]?"
     val groupSeparator = "[ -]+" // space ' ' or dash '-'
     val groupData = "[a-zA-Z0-9]" // at least one lowercase/uppercase English letter or a numeric digit
-    val parenthesizedGroupData="[(]$groupData+[)]"
+    val parenthesizedGroupData = "[(]$groupData+[)]"
     require(groupSeparator.toRegex().matches(" "))
-    reqVPN(optionalPlusPrefix,"")
-    reqVPN(optionalPlusPrefix,"+")
-    reqIVPN(optionalPlusPrefix,"X")
-    reqVPN(groupSeparator," ")
-    reqVPN(groupSeparator,"  ")
-    reqVPN(groupSeparator,"-")
-    reqVPN(groupSeparator,"- -")
-    reqVPN("$groupData+","aZz")
-    reqIVPN("$groupData+","a@Zz")
+    reqVPN(optionalPlusPrefix, "")
+    reqVPN(optionalPlusPrefix, "+")
+    reqIVPN(optionalPlusPrefix, "X")
+    reqVPN(groupSeparator, " ")
+    reqVPN(groupSeparator, "  ")
+    reqVPN(groupSeparator, "-")
+    reqVPN(groupSeparator, "- -")
+    reqVPN("$groupData+", "aZz")
+    reqIVPN("$groupData+", "a@Zz")
 //    val singleGroup = "${optionalPlusPrefix}(${groupData}+)|${optionalPlusPrefix}([(]${groupData}+[)])"
     val singleGroup = "${optionalPlusPrefix}(${groupData}+)|${optionalPlusPrefix}(${parenthesizedGroupData}+)"
-    reqVPN(singleGroup,"0")
-    reqVPN(singleGroup,"123")
-    reqVPN(singleGroup,"(0)")
-    reqVPN(singleGroup,"+0")
-    reqVPN(singleGroup,"+(0)")
-    reqVPN(singleGroup,"+01234567890Abcd")
-    reqVPN(singleGroup,"+(01234567890Abcd)")
-    reqIVPN(singleGroup,"+01234567890Abcd OTHER")
-    reqIVPN(singleGroup,"+01234567890Abcd-OTHER")
-    reqIVPN(singleGroup,"+01234567890Abcd- -OTHER")
-    reqIVPN(singleGroup,"+(01234567890Abcd) OTHER")
-    reqIVPN(singleGroup,"+(01234567890Abcd)-OTHER")
-    reqIVPN(singleGroup,"+(01234567890Abcd)OTHER")
+    reqVPN(singleGroup, "0")
+    reqVPN(singleGroup, "123")
+    reqVPN(singleGroup, "(0)")
+    reqVPN(singleGroup, "+0")
+    reqVPN(singleGroup, "+(0)")
+    reqVPN(singleGroup, "+01234567890Abcd")
+    reqVPN(singleGroup, "+(01234567890Abcd)")
+    reqIVPN(singleGroup, "+01234567890Abcd OTHER")
+    reqIVPN(singleGroup, "+01234567890Abcd-OTHER")
+    reqIVPN(singleGroup, "+01234567890Abcd- -OTHER")
+    reqIVPN(singleGroup, "+(01234567890Abcd) OTHER")
+    reqIVPN(singleGroup, "+(01234567890Abcd)-OTHER")
+    reqIVPN(singleGroup, "+(01234567890Abcd)OTHER")
     val twoGroupsNoParens = "${optionalPlusPrefix}(${groupData}+)${groupSeparator}+(${groupData}{2,})"
-    reqVPN(twoGroupsNoParens,"+01234567890Abcd OTHER")
-    reqVPN(twoGroupsNoParens,"+C OTHER")
-    reqIVPN(twoGroupsNoParens,"+01234567890Abcd 1")
-    reqIVPN(twoGroupsNoParens,"+0 1")
-    reqVPN(twoGroupsNoParens,"+01234567890Abcd-OTHER")
-    reqVPN(twoGroupsNoParens,"+01234567890Abcd- OTHER")
-    reqVPN(twoGroupsNoParens,"+01234567890Abcd- - OTHER")
+    reqVPN(twoGroupsNoParens, "+01234567890Abcd OTHER")
+    reqVPN(twoGroupsNoParens, "+C OTHER")
+    reqIVPN(twoGroupsNoParens, "+01234567890Abcd 1")
+    reqIVPN(twoGroupsNoParens, "+0 1")
+    reqVPN(twoGroupsNoParens, "+01234567890Abcd-OTHER")
+    reqVPN(twoGroupsNoParens, "+01234567890Abcd- OTHER")
+    reqVPN(twoGroupsNoParens, "+01234567890Abcd- - OTHER")
     val twoGroupsParensGroup1 = "${optionalPlusPrefix}(${parenthesizedGroupData}+)${groupSeparator}+(${groupData}+)"
-    reqVPN(twoGroupsParensGroup1,"+(01234567890Abcd) OTHER")
-    reqVPN(twoGroupsParensGroup1,"+(01234567890Abcd)-OTHER")
-    reqIVPN(twoGroupsParensGroup1,"+01234567890Abcd (OTHER)")
+    reqVPN(twoGroupsParensGroup1, "+(01234567890Abcd) OTHER")
+    reqVPN(twoGroupsParensGroup1, "+(01234567890Abcd)-OTHER")
+    reqIVPN(twoGroupsParensGroup1, "+01234567890Abcd (OTHER)")
     val twoGroupsParensGroup2 = "${optionalPlusPrefix}(${groupData}+)${groupSeparator}+(${parenthesizedGroupData}+)"
-    reqVPN(twoGroupsParensGroup2,"+01234567890Abcd (OTHER)")
-    reqVPN(twoGroupsParensGroup2,"+0 (OTHER)")
+    reqVPN(twoGroupsParensGroup2, "+01234567890Abcd (OTHER)")
+    reqVPN(twoGroupsParensGroup2, "+0 (OTHER)")
     val twoGroups = "$twoGroupsNoParens|$twoGroupsParensGroup1|$twoGroupsParensGroup2"
-    reqVPN(twoGroups,"+0 (OTHER)")
-    reqVPN(twoGroups,"+01234567890Abcd (OTHER)")
-    reqVPN(twoGroups,"+(01234567890Abcd) OTHER")
-    reqVPN(twoGroups,"+01234567890Abcd OTHER")
-    reqVPN(twoGroups,"01234567890Abcd OTHER")
+    reqVPN(twoGroups, "+0 (OTHER)")
+    reqVPN(twoGroups, "+01234567890Abcd (OTHER)")
+    reqVPN(twoGroups, "+(01234567890Abcd) OTHER")
+    reqVPN(twoGroups, "+01234567890Abcd OTHER")
+    reqVPN(twoGroups, "01234567890Abcd OTHER")
     val beyondTwoGroupWithSeparator = "(${singleGroup}|${twoGroups})(${groupSeparator}+(${groupData}{2,}))*"
-    reqVPN(beyondTwoGroupWithSeparator,"123")
-    reqVPN(beyondTwoGroupWithSeparator,"01234567890Abcd OTHER")
-    reqVPN(beyondTwoGroupWithSeparator,"01234567890Abcd (OTHER)")
-    reqIVPN(beyondTwoGroupWithSeparator,"01234567890Abcd (OTHER) 2 34")
+    reqVPN(beyondTwoGroupWithSeparator, "123")
+    reqVPN(beyondTwoGroupWithSeparator, "01234567890Abcd OTHER")
+    reqVPN(beyondTwoGroupWithSeparator, "01234567890Abcd (OTHER)")
+    reqIVPN(beyondTwoGroupWithSeparator, "01234567890Abcd (OTHER) 2 34")
     return phoneNumber.matches(Regex(beyondTwoGroupWithSeparator))
 }
 

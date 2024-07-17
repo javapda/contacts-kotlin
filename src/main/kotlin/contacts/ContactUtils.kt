@@ -1,7 +1,13 @@
 package com.javapda.contacts
 
+import com.squareup.moshi.*
+import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import java.lang.reflect.ParameterizedType
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * Is valid phone number
@@ -61,7 +67,7 @@ fun reqVPN(pattern: String, candidate: String) {
 fun formatLocalDateTime(localDateTime: LocalDateTime): String {
     // 2018-01-01T00:01
 
-    return localDateTime.toString().substring(0,16)
+    return localDateTime.toString().substring(0, 16)
 }
 
 /**
@@ -85,6 +91,21 @@ fun isValidLocalDateText(localDateText: String): Boolean {
         return false
     }
 }
+
+class LocalDateTimeAdapter {
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
+    @ToJson
+    fun toJson(localDateTime: LocalDateTime): String {
+        return localDateTime.format(formatter)
+    }
+
+    @FromJson
+    fun fromJson(localDateTimeString: String): LocalDateTime {
+        return LocalDateTime.parse(localDateTimeString, formatter)
+    }
+}
+
 
 fun isValidPhoneNumber(phoneNumber: String): Boolean {
 //    return phoneNumber.matches(Regex("^(?:\\+.\\s\\d{2})|(?:\\+\\(\\S{5,7}\\))|^(?:\\d{1,3}\$)|^(?:\\(\\d{1,3}\\)\$)|^(?:\\d{3}.[a-zA-Z]{3})|^(?:\\d{3}.[0-9]{3}.[a-zA-Z]{3})|^(?:\\d{3}.[0-9]{3}.[0-9]{3}\$)|^(?:\\d{3}.\\(\\d{3}\\))\$|^(?:\\d{3}.\\d{2}.[a-z]{2,4}.[0-9]{2})|^(?:\\d{3}.\\(\\d{3}\\).[0-9]{3}\$)|^(?:\\d{3}.\\(\\d{2}\\).\\d{2}.\\d{2})|^(?:\\(\\d{3}\\).\\d{3}\$)|^(?:\\(\\d{3}\\).\\d{3}.\\d{3})"))
@@ -149,3 +170,91 @@ fun isValidPhoneNumber(phoneNumber: String): Boolean {
 }
 
 fun isInvaliPhoneNumber(phoneNumber: String): Boolean = !isValidPhoneNumber(phoneNumber)
+interface JsonGenerator<T> {
+    fun toJson(obj: T): String
+    fun fromJson(json: String): T
+}
+
+class PersonJsonGenerator : JsonGenerator<Person> {
+    private val type = Types.newParameterizedType(Person::class.java, Date::class.java, LocalDateTime::class.java)
+    private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).add(LocalDateTimeAdapter()).build()
+    private val personAdapter = moshi.adapter<Person?>(type)
+    override fun toJson(obj: Person): String = personAdapter.toJson(obj)
+    override fun fromJson(json: String): Person = personAdapter.fromJson(json)!!
+}
+
+class PersonListJsonGenerator : JsonGenerator<List<Person>> {
+    private val type =
+        Types.newParameterizedType(List::class.java, Person::class.java, Date::class.java, LocalDateTime::class.java)
+    private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).add(LocalDateTimeAdapter()).build()
+    private val personListAdapter = moshi.adapter<List<Person>?>(type)
+    override fun toJson(obj: List<Person>): String = personListAdapter.toJson(obj)
+    override fun fromJson(json: String): List<Person> = personListAdapter.fromJson(json)!!
+}
+
+class OrganizationJsonGenerator : JsonGenerator<Organization> {
+    private val type: ParameterizedType =
+        Types.newParameterizedType(Organization::class.java, Date::class.java, LocalDateTime::class.java)
+    private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).add(LocalDateTimeAdapter()).build()
+    private val organizationAdapter: JsonAdapter<Organization> = moshi.adapter<Organization?>(type)
+    override fun toJson(obj: Organization): String = organizationAdapter.toJson(obj)
+    override fun fromJson(json: String): Organization = organizationAdapter.fromJson(json)!!
+}
+
+class OrganizationListJsonGenerator : JsonGenerator<List<Organization>> {
+    private val type = Types.newParameterizedType(
+        List::class.java,
+        Organization::class.java,
+        Date::class.java,
+        LocalDateTime::class.java
+    )
+    private val moshi: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).add(LocalDateTimeAdapter()).build()
+    private val organizationAdapter = moshi.adapter<List<Organization>?>(type)
+    override fun toJson(obj: List<Organization>): String = organizationAdapter.toJson(obj)
+    override fun fromJson(json: String): List<Organization> = organizationAdapter.fromJson(json)!!
+
+}
+
+class ContactJsonGenerator : JsonGenerator<Contact> {
+    var moshi = Moshi.Builder()
+        .add(
+            PolymorphicJsonAdapterFactory.of(Contact::class.java, "contact_type")
+                .withSubtype(Person::class.java, ContactType.PERSON.name)
+                .withSubtype(Organization::class.java, ContactType.ORGANIZATION.name)
+        )
+        .add(LocalDateTimeAdapter())
+        .add(KotlinJsonAdapterFactory()) // NOTE: must be the LAST adapter added
+        .build()
+    private val contactAdapter = moshi.adapter(Contact::class.java)
+    override fun toJson(obj: Contact): String {
+        return contactAdapter.toJson(obj)
+    }
+
+    override fun fromJson(json: String): Contact {
+        return contactAdapter.fromJson(json)!!
+    }
+}
+
+class ContactListJsonGenerator : JsonGenerator<List<Contact>> {
+    var moshi = Moshi.Builder()
+        .add(
+            PolymorphicJsonAdapterFactory.of(Contact::class.java, "contact_type")
+                .withSubtype(Person::class.java, ContactType.PERSON.name)
+                .withSubtype(Organization::class.java, ContactType.ORGANIZATION.name)
+        )
+        .add(LocalDateTimeAdapter())
+        .add(KotlinJsonAdapterFactory()) // NOTE: must be the LAST adapter added
+        .build()
+    private val type = Types.newParameterizedType(
+        List::class.java,
+        Contact::class.java,
+    )
+    private val contactListAdapter = moshi.adapter<List<Contact>?>(type)
+    override fun toJson(obj: List<Contact>): String {
+        return contactListAdapter.toJson(obj)!!
+    }
+
+    override fun fromJson(json: String): List<Contact> {
+        return contactListAdapter.fromJson(json)!!
+    }
+}

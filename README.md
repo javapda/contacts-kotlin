@@ -1,9 +1,200 @@
 # [contacts-kotlin](https://github.com/javapda/contacts-kotlin)
 * based on the Hyperskill [Contacts (Kotlin)](https://hyperskill.org/projects/261/) project
 * project [contacts-kotlin](https://github.com/javapda/contacts-kotlin) on github
+* [discussion stage 4/4](https://hyperskill.org/projects/261/stages/1324/implement#comment)
+
+## build and run
+```
+.\gradlew.bat clean build 
+java -jar .\build\libs\contacts-kotlin-0.0.1-SNAPSHOT-all.jar
+# - or - 
+#  java -cp  .\build\libs\coffee-machine-kotlin-0.0.1-SNAPSHOT-all.jar  com.javapda.contacts.ContactsKt
+```
+
 
 # resources
 * [regex tester](https://www.freeformatter.com/regex-tester.html)
+
+## Hyperskill
+* [my profile](https://hyperskill.org/profile/615178637)
+* [Troubleshooting: no tests have run](https://plugins.jetbrains.com/plugin/10081-jetbrains-academy/docs/troubleshooting-guide.html#no_tests_have_run)
+
+## Solve in IDE?
+* When you go to enter your solution in [Stage 4/4](https://hyperskill.org/projects/261/stages/1324/implement) 
+you discover you must use the Hyperskill IDE integration. There is a button labeled "Solve in IDE" and
+the "Code Editor" tab is disabled with tooltip text of _**"You can solve it only in IDE, no web-version available here"**_.
+* Once the "Solve in IDE" button is clicked there is some interaction with IntelliJ IDEA
+and two green labeled areas:
+  1. IDE responding
+  2. the JetBrains Academy plugin responding
+* Issue?
+```courseignore
+FEEDBACK:
+Failed to launch checking. <a href="reload_gradle">Reload Gradle project</a>. For more information, see <a href="https://plugins.jetbrains.com/plugin/10081-jetbrains-academy/docs/troubleshooting-guide.html#no_tests_have_run">the Troubleshooting guide</a>
+```
+### plugin path issue?
+* when attempting to run a simple main() in the IDE connected to Hyperskill, the errors below came up. The
+fix was to go into Project Settings (ctrl-alt-shift-S) and go to the Project tab. There the setting of the SDK was
+incorrect - was pointing to a WSL version of the JDK. Once I changed it to "17 java version 17.0.9" things began to work.
+```courseignore
+Kotlin: Plugin classpath entry points to a non-existent location: /home/jkroub/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-jvm/1.8.20/51c8efbe177ebcaa89c82d01663c60060a120dd2/kotlin-scripting-jvm-1.8.20.jar
+
+Kotlin: Plugin classpath entry points to a non-existent location: /home/jkroub/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-scripting-common/1.8.20/f19996e3a40658541fe2108c483fd3301c4a3416/kotlin-scripting-common-1.8.20.jar
+
+Kotlin: Plugin classpath entry points to a non-existent location: /home/jkroub/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.8.20/e72fc5e03ec6c064c678a6bd0d955c88d55b0c4a/kotlin-stdlib-1.8.20.jar
+
+Kotlin: Plugin classpath entry points to a non-existent location: /home/jkroub/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-common/1.8.20/5eddaaf234c8c49d03eebeb6a14feb7f90faca71/kotlin-stdlib-common-1.8.20.jar
+
+Kotlin: Plugin classpath entry points to a non-existent location: /home/jkroub/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/1.8.20/c850771e723701f9d63dbcf641429c0f29290074/kotlin-script-runtime-1.8.20.jar
+```
+
+## Stage 4 Dependencies
+### build.gradle.kts (kotlin)
+```courseignore
+plugins {
+    kotlin("jvm") version "1.9.23"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.google.devtools.ksp").version("1.6.10-1.0.4")
+
+}
+dependencies {
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    implementation("com.squareup.moshi:moshi-adapters:1.15.1")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
+}
+
+```
+
+### build.gradle (groovy) : Hyperskill Solve in IDE
+```courseignore
+    dependencies {
+        implementation "com.squareup.moshi:moshi-kotlin:1.15.1"
+        implementation "com.squareup.moshi:moshi-adapters:1.15.1"
+        testImplementation 'com.github.hyperskill:hs-test:release-SNAPSHOT'
+        testImplementation "org.junit.jupiter:junit-jupiter:5.9.3"
+        testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.3"
+    }
+
+```
+
+## Stage 4/4 : Searching
+### Description
+Our temporary solution in the previous stage was bad because of every time you want to interact with concrete classes you must check the Boolean property then apply different code according to the concrete class. So far so good, you implement this behavior every time you need to. However, in a larger application, there can be 100 places or more where you must do this. And at the end of the day, a new feature request might come in: implement a third type of records, something that represents an automated system with robots serving the calls. You would be very annoyed that you were forced to find all the places where you interact with concrete classes.
+
+The solution to this problem is a **polymorphism**.
+
+Basically, you need to implement the functionality in one place inside a concrete class. All of the derived classes should implement this method, and in the base class, there should be an abstract method. In the code, you actually call this abstract method and get different code executions in the derived classes.
+
+To solve your problem, you should create several methods:
+
+1. A method that returns all of the possible properties this class is able to change.
+2. A method that takes a string that represents a property that the class is able to change and its new value.
+3. A method that takes a string representation of the property and returns the value of this property.
+After that, you don't need any Boolean workarounds and type casts; the code will be nice and clean.
+
+Also, in this stage, you should implement saving to a file and loading from a file. You can save the Contacts using serialization. You should specify a file you are working with by a command-line argument. This would automatically save the Contacts on the hard drive after each action that modifies data. If you don't specify an argument, then you should create a new Contacts and keep it in memory. If you specify a file that doesn't exist, you should create an empty Contacts and save all changes to the newly created file.
+
+Also, in this stage, you should implement search functionality. For this, you can append all of the values from all of the properties and check if this string contains a search request. It should support regular expressions, too! And, of course, it should be case insensitive.
+
+Use an empty line to separate different actions, like in the example.
+
+### My Notes
+* so we will need to save content to file and then re-load it. How about using [moshi-kotlin](https://github.com/square/moshi/)?
+* moshi : [examples - recipes](https://github.com/square/moshi/tree/master/examples/src/main/java/com/squareup/moshi/recipes)
+* [moshi javadoc](https://square.github.io/moshi/1.x/moshi/)
+#### Moshi Todo's
+* DONE: add dependency to build.gradle.kts [moshi and kotlin-reflect]
+* TODO: add simple save and reload
+* TODO: figure out how to save and reload a list of Contact objects
+```courseignore
+dependencies {
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+}
+```
+
+### Example
+Below is an example of how your output might look. The symbol > represents the user input.
+```
+open phonebook.db
+
+[menu] Enter action (add, list, search, count, exit): > count
+The Phone Book has 6 records.
+
+[menu] Enter action (add, list, search, count, exit): > search
+Enter search query: > cent
+Found 3 results:
+1. Central Bank
+2. Centurion Adams
+3. Decent Pizza Shop
+
+[search] Enter action ([number], back, again): > again
+Enter search query: > shop
+Found 2 results:
+1. Decent Pizza Shop
+2. Car shop
+
+[search] Enter action ([number], back, again): > 2
+Organization name: Car shop
+Address: Wall St. 3
+Number: +0 (123) 456-789-9999
+Time created: 2018-01-01T00:03
+Time last edit: 2018-04-29T11:34
+
+[record] Enter action (edit, delete, menu): > edit
+Select a field (name, address, number): > name
+Enter name: > New Car Shop
+Saved
+Organization name: New Car Shop
+Address: Wall St. 3
+Number: +0 (123) 456-789-9999
+Time created: 2018-01-01T00:03
+Time last edit: 2018-11-20T11:04
+
+[record] Enter action (edit, delete, menu): > menu
+
+[menu] Enter action (add, list, search, count, exit): > search
+Enter search query: > new
+Found 1 result:
+1. New Car Shop
+
+[search] Enter action ([number], back, again): > back
+
+[menu] Enter action (add, list, search, count, exit): > list
+1. New Car Shop
+2. Decent Pizza Shop
+3. Central Bank
+4. Centurion Adams
+5. John Smith
+6. Alice Wonderlanded
+
+[list] Enter action ([number], back): > 6
+Name: Alice
+Surname: Wonderlanded
+Birth date: [no data]
+Gender: F
+Number: +123123 (123) 12-23-34-45
+Time created: 2018-03-12T11:21
+Time last edit: 2018-03-12T11:21
+
+[record] Enter action (edit, delete, menu): > edit
+Select a field (name, surname, birth, gender, number): > number
+Enter number: > +23 (321) 12-12 12 12
+Saved
+Name: Alice
+Surname: Wonderlanded
+Birth date: [no data]
+Gender: F
+Number: +23 (321) 12-12 12 12
+Time created: 2018-03-12T11:21
+Time last edit: 2018-11-20T11:07
+
+[record] Enter action (edit, delete, menu): > menu
+
+[menu] Enter action (add, list, search, count, exit): > exit
+```
 
 ## Stage 3/4 : [Upgrade your contacts](https://hyperskill.org/projects/261/stages/1323/implement)
 ### Description
